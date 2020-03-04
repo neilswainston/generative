@@ -18,10 +18,10 @@ RUN_FOLDER = 'run/{}/'.format(SECTION)
 RUN_FOLDER += '_'.join([RUN_ID, DATA_NAME])
 
 if not os.path.exists(RUN_FOLDER):
-    os.mkdir(RUN_FOLDER)
-    os.mkdir(os.path.join(RUN_FOLDER, 'viz'))
-    os.mkdir(os.path.join(RUN_FOLDER, 'images'))
-    os.mkdir(os.path.join(RUN_FOLDER, 'weights'))
+    os.makedirs(RUN_FOLDER)
+    os.makedirs(os.path.join(RUN_FOLDER, 'viz'))
+    os.makedirs(os.path.join(RUN_FOLDER, 'images'))
+    os.makedirs(os.path.join(RUN_FOLDER, 'weights'))
 
 
 def main():
@@ -32,7 +32,8 @@ def main():
     (x_train, _), _ = load_mnist()
 
     # ## architecture
-    vae = VariationalAutoencoder(
+    model = VariationalAutoencoder(
+        name='variational_autoencoder',
         input_dim=(28, 28, 1),
         encoder_conv_filters=[32, 64, 64, 64],
         encoder_conv_kernel_size=[3, 3, 3, 3],
@@ -40,21 +41,23 @@ def main():
         decoder_conv_t_filters=[64, 64, 32, 1],
         decoder_conv_t_kernel_size=[3, 3, 3, 3],
         decoder_conv_t_strides=[1, 2, 2, 1],
-        z_dim=2
+        z_dim=2,
+        learning_rate=0.0005,
+        r_loss_factor=1000
     )
 
     if mode == 'build':
-        vae.save(RUN_FOLDER)
+        model.save(RUN_FOLDER)
     else:
-        vae.load_weights(os.path.join(RUN_FOLDER, 'weights/weights.h5'))
+        model.load_weights(os.path.join(RUN_FOLDER, 'weights/weights.h5'))
 
-    vae.encoder.summary()
-    vae.decoder.summary()
+    model.encoder.summary()
+    model.decoder.summary()
 
     # ## training
-    vae.compile(learning_rate=0.0005, r_loss_factor=1000)
+    model.compile()
 
-    vae.train(
+    model.train(
         x_train,
         batch_size=32,
         epochs=10,

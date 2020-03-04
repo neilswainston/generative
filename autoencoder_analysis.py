@@ -16,7 +16,7 @@ from utils.loaders import load_mnist, load_model
 
 
 # run params
-SECTION = 'vae'
+SECTION = 'ae'
 RUN_ID = '0001'
 DATA_NAME = 'digits'
 RUN_FOLDER = 'run/{}/'.format(SECTION)
@@ -66,16 +66,16 @@ def main():
     _, (x_test, y_test) = load_mnist()
 
     # ## Load the model architecture
-    autoencoder = load_model(Autoencoder, RUN_FOLDER)
+    model = load_model(Autoencoder, RUN_FOLDER)
 
     # ## reconstructing original paintings
-    _plot_reconstruct_orig(autoencoder, x_test)
+    _plot_reconstruct_orig(model, x_test)
 
     # ## Mr N. Coder's wall
     n_to_show = 5000
     example_idx = np.random.choice(range(len(x_test)), n_to_show)
     example_images = x_test[example_idx]
-    z_points = autoencoder.encoder.predict(example_images)
+    z_points = model.encoder.predict(example_images)
     _plot_latent_space(z_points)
 
     min_x = min(z_points[:, 0])
@@ -96,7 +96,7 @@ def main():
     x = np.random.uniform(min_x, max_x, size=grid_size * grid_depth)
     y = np.random.uniform(min_y, max_y, size=grid_size * grid_depth)
     z_grid = np.array(list(zip(x, y)))
-    reconst = autoencoder.decoder.predict(z_grid)
+    reconst = model.decoder.predict(z_grid)
 
     plt.scatter(z_grid[:, 0], z_grid[:, 1], c='red', alpha=1, s=20)
     plt.show()
@@ -120,7 +120,7 @@ def main():
     example_images = x_test[example_idx]
     example_labels = y_test[example_idx]
 
-    z_points = autoencoder.encoder.predict(example_images)
+    z_points = model.encoder.predict(example_images)
 
     plt.figure(figsize=(figsize, figsize))
     plt.scatter(z_points[:, 0], z_points[:, 1],
@@ -136,7 +136,7 @@ def main():
     example_images = x_test[example_idx]
     example_labels = y_test[example_idx]
 
-    z_points = autoencoder.encoder.predict(example_images)
+    z_points = model.encoder.predict(example_images)
 
     plt.figure(figsize=(5, 5))
     plt.scatter(z_points[:, 0], z_points[:, 1],
@@ -150,7 +150,7 @@ def main():
     yv = yv.flatten()
     z_grid = np.array(list(zip(xv, yv)))
 
-    reconst = autoencoder.decoder.predict(z_grid)
+    reconst = model.decoder.predict(z_grid)
 
     plt.scatter(z_grid[:, 0], z_grid[:, 1], c='black', alpha=1, s=5)
 

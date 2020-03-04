@@ -5,6 +5,7 @@ All rights reserved.
 
 @author: neilswainston
 '''
+# pylint: disable=no-self-use
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=invalid-name
@@ -27,6 +28,7 @@ class Autoencoder():
     '''Class to represent an Autoencoder.'''
 
     def __init__(self,
+                 name,
                  input_dim,
                  encoder_conv_filters,
                  encoder_conv_kernel_size,
@@ -35,11 +37,11 @@ class Autoencoder():
                  decoder_conv_t_kernel_size,
                  decoder_conv_t_strides,
                  z_dim,
+                 learning_rate,
                  use_batch_norm=False,
                  use_dropout=False):
 
-        self.name = 'autoencoder'
-
+        self.name = name
         self.input_dim = input_dim
         self.encoder_conv_filters = encoder_conv_filters
         self.encoder_conv_kernel_size = encoder_conv_kernel_size
@@ -48,18 +50,16 @@ class Autoencoder():
         self.decoder_conv_t_kernel_size = decoder_conv_t_kernel_size
         self.decoder_conv_t_strides = decoder_conv_t_strides
         self.z_dim = z_dim
-
+        self.learning_rate = learning_rate
         self.use_batch_norm = use_batch_norm
         self.use_dropout = use_dropout
 
         self.n_layers_encoder = len(encoder_conv_filters)
         self.n_layers_decoder = len(decoder_conv_t_filters)
 
-        self.learning_rate = np.nan
+        self.__build()
 
-        self._build()
-
-    def _build(self):
+    def __build(self):
 
         # THE ENCODER
         encoder_input = Input(shape=self.input_dim, name='encoder_input')
@@ -86,9 +86,8 @@ class Autoencoder():
                 x = Dropout(rate=0.25)(x)
 
         shape_before_flattening = K.int_shape(x)[1:]
-
         x = Flatten()(x)
-        encoder_output = Dense(self.z_dim, name='encoder_output')(x)
+        encoder_output = self.get_enc_output(x)
 
         self.encoder = Model(encoder_input, encoder_output)
 
@@ -130,59 +129,14 @@ class Autoencoder():
 
         self.model = Model(model_input, model_output)
 
-    def compile(self, learning_rate):
+    def compile(self):
         '''Compile.'''
-        self.learning_rate = learning_rate
-
-        optimizer = Adam(lr=learning_rate)
-
-        def r_loss(y_true, y_pred):
-            return K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
-
-        self.model.compile(optimizer=optimizer, loss=r_loss)
-
-    def save(self, folder):
-        '''Save.'''
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-            os.makedirs(os.path.join(folder, 'viz'))
-            os.makedirs(os.path.join(folder, 'weights'))
-            os.makedirs(os.path.join(folder, 'images'))
-
-        with open(os.path.join(folder, 'params.pkl'), 'wb') as f:
-            pickle.dump([
-                self.input_dim,
-                self.encoder_conv_filters,
-                self.encoder_conv_kernel_size,
-                self.encoder_conv_strides,
-                self.decoder_conv_t_filters,
-                self.decoder_conv_t_kernel_size,
-                self.decoder_conv_t_strides,
-                self.z_dim,
-                self.use_batch_norm,
-                self.use_dropout
-            ], f)
-
-        self.plot_model(folder)
-
-    def load_weights(self, filepath):
-        '''Load weights.'''
-        self.model.load_weights(filepath)
+        self.model.compile(optimizer=Adam(lr=self.learning_rate),
+                           loss=self.r_loss)
 
     def train(self, x_train, batch_size, epochs, run_folder,
               print_every_n_batches=100, initial_epoch=0, lr_decay=1):
         '''Train.'''
-        custom_callback = CustomCallback(
-            run_folder, print_every_n_batches, initial_epoch, self)
-
-        lr_sched = step_decay_schedule(
-            initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
-
-        checkpoint2 = ModelCheckpoint(
-            os.path.join(run_folder, 'weights/weights.h5'),
-            save_weights_only=True, verbose=1)
-
-        callbacks_list = [checkpoint2, custom_callback, lr_sched]
 
         self.model.fit(
             x_train,
@@ -191,7 +145,29 @@ class Autoencoder():
             shuffle=True,
             epochs=epochs,
             initial_epoch=initial_epoch,
-            callbacks=callbacks_list
+            callbacks=self.__get_callbacks(run_folder,
+                                           print_every_n_batches,
+                                           initial_epoch,
+                                           lr_decay),
+        )
+
+    def train_with_generator(self, data_flow, epochs, steps_per_epoch,
+                             run_folder,
+                             print_every_n_batches=100,
+                             initial_epoch=0, lr_decay=1):
+        '''Train with generator.'''
+        self.model.save_weights(os.path.join(run_folder, 'weights/weights.h5'))
+
+        self.model.fit_generator(
+            data_flow,
+            shuffle=True,
+            epochs=epochs,
+            initial_epoch=initial_epoch,
+            callbacks=self.__get_callbacks(run_folder,
+                                           print_every_n_batches,
+                                           initial_epoch,
+                                           lr_decay),
+            steps_per_epoch=steps_per_epoch
         )
 
     def plot_model(self, run_folder):
@@ -208,3 +184,66 @@ class Autoencoder():
                    to_file=os.path.join(run_folder, 'viz/decoder.png'),
                    show_shapes=True,
                    show_layer_names=True)
+
+    def save(self, folder):
+        '''Save.'''
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+            os.makedirs(os.path.join(folder, 'viz'))
+            os.makedirs(os.path.join(folder, 'weights'))
+            os.makedirs(os.path.join(folder, 'images'))
+
+        with open(os.path.join(folder, 'params.pkl'), 'wb') as fle:
+            pickle.dump(self.__get_arguments(), fle)
+
+        self.plot_model(folder)
+
+    def load_weights(self, filepath):
+        '''Load weights.'''
+        self.model.load_weights(filepath)
+
+    def r_loss(self, y_true, y_pred):
+        '''Get loss.'''
+        return K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
+
+    def get_enc_output(self, x):
+        '''Get encoder output.'''
+        return Dense(self.z_dim, name='encoder_output')(x)
+
+    def __get_callbacks(self, run_folder, print_every_n_batches, initial_epoch,
+                        lr_decay):
+        '''Get callbacks.'''
+        custom_callback = CustomCallback(
+            run_folder, print_every_n_batches, initial_epoch, self)
+
+        lr_sched = step_decay_schedule(
+            initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
+
+        checkpoint_filepath = os.path.join(
+            run_folder, "weights/weights-{epoch:03d}-{loss:.2f}.h5")
+
+        checkpoint1 = ModelCheckpoint(
+            checkpoint_filepath, save_weights_only=True, verbose=1)
+
+        checkpoint2 = ModelCheckpoint(
+            os.path.join(run_folder, 'weights/weights.h5'),
+            save_weights_only=True, verbose=1)
+
+        return [checkpoint1, checkpoint2, custom_callback, lr_sched]
+
+    def __get_arguments(self):
+        '''Get arguments.'''
+        return [
+            self.name,
+            self.input_dim,
+            self.encoder_conv_filters,
+            self.encoder_conv_kernel_size,
+            self.encoder_conv_strides,
+            self.decoder_conv_t_filters,
+            self.decoder_conv_t_kernel_size,
+            self.decoder_conv_t_strides,
+            self.z_dim,
+            self.learning_rate,
+            self.use_batch_norm,
+            self.use_dropout
+        ]
