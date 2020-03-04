@@ -7,7 +7,7 @@ All rights reserved.
 '''
 import os
 
-from models.AE import Autoencoder
+from models.ae import Autoencoder
 from utils.loaders import load_mnist
 
 
@@ -35,7 +35,6 @@ def main():
     (x_train, _), _ = load_mnist()
 
     # ## Define the structure of the neural network
-
     autoencoder = Autoencoder(
         input_dim=(28, 28, 1),
         encoder_conv_filters=[32, 64, 64, 64],
