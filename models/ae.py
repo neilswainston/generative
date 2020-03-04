@@ -54,9 +54,6 @@ class Autoencoder():
         self.use_batch_norm = use_batch_norm
         self.use_dropout = use_dropout
 
-        self.n_layers_encoder = len(encoder_conv_filters)
-        self.n_layers_decoder = len(decoder_conv_t_filters)
-
         self.__build()
 
     def __build(self):
@@ -66,7 +63,7 @@ class Autoencoder():
 
         x = encoder_input
 
-        for i in range(self.n_layers_encoder):
+        for i in range(len(self.encoder_conv_filters)):
             conv_layer = Conv2D(
                 filters=self.encoder_conv_filters[i],
                 kernel_size=self.encoder_conv_kernel_size[i],
@@ -97,7 +94,7 @@ class Autoencoder():
         x = Dense(np.prod(shape_before_flattening))(decoder_input)
         x = Reshape(shape_before_flattening)(x)
 
-        for i in range(self.n_layers_decoder):
+        for i in range(len(self.decoder_conv_t_filters)):
             conv_t_layer = Conv2DTranspose(
                 filters=self.decoder_conv_t_filters[i],
                 kernel_size=self.decoder_conv_t_kernel_size[i],
@@ -108,7 +105,7 @@ class Autoencoder():
 
             x = conv_t_layer(x)
 
-            if i < self.n_layers_decoder - 1:
+            if i < len(self.decoder_conv_t_filters) - 1:
                 x = LeakyReLU()(x)
 
                 if self.use_batch_norm:
