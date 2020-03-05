@@ -5,21 +5,7 @@ All rights reserved.
 
 @author: neilswainston
 '''
-import os
-import pickle
 from keras.datasets import mnist
-
-
-def load_model(model_class, folder):
-    '''Local model.'''
-    with open(os.path.join(folder, 'params.pkl'), 'rb') as fle:
-        params = pickle.load(fle)
-
-    model = model_class(*params)
-
-    model.load_weights(os.path.join(folder, 'weights/weights.h5'))
-
-    return model
 
 
 def load_mnist():

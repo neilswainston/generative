@@ -16,22 +16,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-class CustomCallback(Callback):
-    '''Class to implement custom Callback.'''
+class ImageCallback(Callback):
+    '''Class to implement image-writing Callback.'''
 
-    def __init__(self, run_folder, print_every_n_batches, initial_epoch, ae):
-        self.__epoch = initial_epoch
-        self.__run_folder = run_folder
-        self.__print_every_n_batches = print_every_n_batches
-        self.__ae = ae
+    def __init__(self, folder, print_batch, obj):
+        self.__epoch = 0
+        self.__folder = folder
+        self.__print_batch = print_batch
+        self.__obj = obj
+
+    def on_epoch_begin(self, epoch, logs={}):
+        self.__epoch = epoch
 
     def on_batch_end(self, btch, logs={}):
-        if btch % self.__print_every_n_batches == 0:
-            z_new = np.random.normal(size=(1, self.__ae.z_dim))
-            reconst = self.__ae.decoder.predict(np.array(z_new))[0].squeeze()
+        if btch % self.__print_batch == 0:
+            z_new = np.random.normal(size=(1, self.__obj.z_dim))
+            reconst = self.__obj.get_decoder().predict(
+                np.array(z_new))[0].squeeze()
 
             filepath = os.path.join(
-                self.__run_folder,
+                self.__folder,
                 'images',
                 'img_' + str(self.__epoch).zfill(3) + '_' + str(btch) + '.jpg')
 
@@ -40,11 +44,8 @@ class CustomCallback(Callback):
             else:
                 plt.imsave(filepath, reconst)
 
-    def on_epoch_begin(self, epoch, logs={}):
-        self.__epoch += 1
 
-
-def step_decay_schedule(initial_lr, decay_factor=0.5, step_size=1):
+def step_decay_schedule(initial_lr, decay_factor, step_size):
     '''
     Wrapper func to create a LearningRateScheduler with step decay schedule.
     '''

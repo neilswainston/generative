@@ -6,37 +6,16 @@ All rights reserved.
 @author: neilswainston
 '''
 # pylint: disable=invalid-name
-import os
-
+import sys
 from models.ae import Autoencoder
-from utils.loaders import load_mnist
+from utils.data_utils import load_mnist
+from utils.model_utils import ModelManager
 
 
-# ## Set parameters
-# run params
-SECTION = 'ae'
-RUN_ID = '0001'
-DATA_NAME = 'digits'
-RUN_FOLDER = 'run/{}/'.format(SECTION)
-RUN_FOLDER += '_'.join([RUN_ID, DATA_NAME])
-
-if not os.path.exists(RUN_FOLDER):
-    os.makedirs(RUN_FOLDER)
-    os.makedirs(os.path.join(RUN_FOLDER, 'viz'))
-    os.makedirs(os.path.join(RUN_FOLDER, 'images'))
-    os.makedirs(os.path.join(RUN_FOLDER, 'weights'))
-
-
-def main():
-    '''main method.'''
-    mode = 'build'
-
-    # ## Load the data
-    (x_train, _), _ = load_mnist()
-
-    # ## Define the structure of the neural network
-    model = Autoencoder(
-        name='autoencoder',
+def run(data_dir, name, build=True):
+    '''Run.'''
+    obj = Autoencoder(
+        name=name,
         input_dim=(28, 28, 1),
         encoder_conv_filters=[32, 64, 64, 64],
         encoder_conv_kernel_size=[3, 3, 3, 3],
@@ -48,25 +27,28 @@ def main():
         learning_rate=0.0005
     )
 
-    if mode == 'build':
-        model.save(RUN_FOLDER)
-    else:
-        model.load_weights(os.path.join(RUN_FOLDER, 'weights/weights.h5'))
+    manager = ModelManager(data_dir, name)
+    manager.init(obj, build)
 
-    model.encoder.summary()
-    model.decoder.summary()
+    obj.get_encoder().summary()
+    obj.get_decoder().summary()
 
-    # ## Train the autoencoder:
-    model.compile()
+    obj.compile()
 
-    model.train(
+    (x_train, _), _ = load_mnist()
+
+    obj.train(
         x_train[:1000],
         batch_size=32,
         epochs=200,
-        run_folder=RUN_FOLDER,
-        initial_epoch=0
+        folder=manager.get_folder()
     )
 
 
+def main(args):
+    '''main method.'''
+    run(args[0], args[1], args[2] == 'True')
+
+
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
