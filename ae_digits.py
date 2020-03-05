@@ -5,15 +5,21 @@ All rights reserved.
 
 @author: neilswainston
 '''
-# pylint: disable=invalid-name
+import os.path
 import sys
+
+from digits_analysis import analyse
 from models.ae import Autoencoder
 from utils.data_utils import load_mnist
 from utils.model_utils import ModelManager
 
 
-def run(data_dir, name, build=True):
+def run(build, data_dir='out'):
     '''Run.'''
+    name = os.path.splitext(os.path.basename(__file__))[0]
+
+    (x_train, _), (x_test, y_test) = load_mnist()
+
     obj = Autoencoder(
         name=name,
         input_dim=(28, 28, 1),
@@ -30,24 +36,25 @@ def run(data_dir, name, build=True):
     manager = ModelManager(data_dir, name)
     manager.init(obj, build)
 
-    obj.get_encoder().summary()
-    obj.get_decoder().summary()
+    if build:
+        obj.get_encoder().summary()
+        obj.get_decoder().summary()
 
-    obj.compile()
+        obj.compile()
 
-    (x_train, _), _ = load_mnist()
+        obj.train(
+            x_train[:1000],
+            batch_size=32,
+            epochs=200,
+            folder=manager.get_folder()
+        )
 
-    obj.train(
-        x_train[:1000],
-        batch_size=32,
-        epochs=200,
-        folder=manager.get_folder()
-    )
+    analyse(obj, x_test, y_test)
 
 
 def main(args):
     '''main method.'''
-    run(args[0], args[1], args[2] == 'True')
+    run(args[0] == 'True')
 
 
 if __name__ == '__main__':

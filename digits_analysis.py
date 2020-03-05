@@ -11,19 +11,15 @@ All rights reserved.
 # pylint: disable=wrong-import-order
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.loaders import load_mnist
 
 
-def analyse(model):
+def analyse(obj, x_test, y_test):
     '''Analyse.'''
-    # ## Load the data
-    _, (x_test, y_test) = load_mnist()
-
     # ## Mr N. Coder's wall
     n_to_show = 5000
     example_idx = np.random.choice(range(len(x_test)), n_to_show)
     example_images = x_test[example_idx]
-    z_points = model.encoder.predict(example_images)
+    z_points = obj.encoder.predict(example_images)
     _plot_latent_space(z_points)
 
     min_x = min(z_points[:, 0])
@@ -44,7 +40,7 @@ def analyse(model):
     x = np.random.uniform(min_x, max_x, size=grid_size * grid_depth)
     y = np.random.uniform(min_y, max_y, size=grid_size * grid_depth)
     z_grid = np.array(list(zip(x, y)))
-    reconst = model.decoder.predict(z_grid)
+    reconst = obj.decoder.predict(z_grid)
 
     plt.scatter(z_grid[:, 0], z_grid[:, 1], c='red', alpha=1, s=20)
     plt.show()
@@ -68,7 +64,7 @@ def analyse(model):
     example_images = x_test[example_idx]
     example_labels = y_test[example_idx]
 
-    z_points = model.encoder.predict(example_images)
+    z_points = obj.encoder.predict(example_images)
 
     plt.figure(figsize=(figsize, figsize))
     plt.scatter(z_points[:, 0], z_points[:, 1],
@@ -84,7 +80,7 @@ def analyse(model):
     example_images = x_test[example_idx]
     example_labels = y_test[example_idx]
 
-    z_points = model.encoder.predict(example_images)
+    z_points = obj.encoder.predict(example_images)
 
     plt.figure(figsize=(5, 5))
     plt.scatter(z_points[:, 0], z_points[:, 1],
@@ -98,7 +94,7 @@ def analyse(model):
     yv = yv.flatten()
     z_grid = np.array(list(zip(xv, yv)))
 
-    reconst = model.decoder.predict(z_grid)
+    reconst = obj.decoder.predict(z_grid)
 
     plt.scatter(z_grid[:, 0], z_grid[:, 1], c='black', alpha=1, s=5)
 
