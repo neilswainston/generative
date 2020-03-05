@@ -11,7 +11,8 @@ All rights reserved.
 from keras import backend as K
 from keras.layers import Dense, Lambda
 from keras.optimizers import Adam
-from models.ae import Autoencoder
+
+from liv_gen.models.ae import Autoencoder
 
 
 class VariationalAutoencoder(Autoencoder):

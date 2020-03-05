@@ -9,7 +9,7 @@ All rights reserved.
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-statements
 # pylint: disable=wrong-import-order
-from utils import analysis_utils, plot_utils
+from liv_gen.utils import analysis_utils, plot_utils
 
 
 def analyse(obj, x_data, y_data):

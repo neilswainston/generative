@@ -8,10 +8,10 @@ All rights reserved.
 import os.path
 import sys
 
-from digits import analysis
-from models.vae import VariationalAutoencoder
-from utils.data_utils import load_mnist
-from utils.model_utils import ModelManager
+from liv_gen.digits import analysis
+from liv_gen.models.vae import VariationalAutoencoder
+from liv_gen.utils.data_utils import load_mnist
+from liv_gen.utils.model_utils import ModelManager
 
 
 def run(build, data_dir='out'):

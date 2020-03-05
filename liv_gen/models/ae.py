@@ -18,9 +18,8 @@ from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, \
 from keras.models import Model
 from keras.optimizers import Adam
 
-
+from liv_gen.utils.callbacks import ImageCallback, step_decay_schedule
 import numpy as np
-from utils.callbacks import ImageCallback, step_decay_schedule
 
 
 class Autoencoder():
