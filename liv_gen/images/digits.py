@@ -28,10 +28,10 @@ def run(obj, build, data_dir='out'):
 
         obj.compile()
 
-        obj.add_callbacks(get_callbacks(manager.get_folder(),
+        obj.add_callbacks(get_callbacks(obj=obj,
+                                        folder=manager.get_folder(),
                                         print_batch=100,
-                                        lr_decay=1,
-                                        obj=obj))
+                                        lr_decay=1))
 
         obj.train(
             x_train,
@@ -42,7 +42,7 @@ def run(obj, build, data_dir='out'):
     analysis.analyse(obj, x_test, y_test)
 
 
-def get_callbacks(folder, print_batch, lr_decay, obj):
+def get_callbacks(obj, folder, print_batch, lr_decay):
     '''Get callbacks.'''
     checkpoint1 = ModelCheckpoint(
         os.path.join(folder, 'weights/weights-{epoch:03d}.h5'),
@@ -55,6 +55,6 @@ def get_callbacks(folder, print_batch, lr_decay, obj):
     lr_sched = step_decay_schedule(
         initial_lr=obj.learning_rate, decay_factor=lr_decay, step_size=1)
 
-    image_callback = callbacks.ImageCallback(folder, print_batch, obj)
+    image_callback = callbacks.ImageCallback(obj, folder, print_batch)
 
     return [checkpoint1, checkpoint2, lr_sched, image_callback]

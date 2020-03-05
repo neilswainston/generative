@@ -19,11 +19,11 @@ import numpy as np
 class ImageCallback(Callback):
     '''Class to implement image-writing Callback.'''
 
-    def __init__(self, folder, print_batch, obj):
-        self.__epoch = 0
+    def __init__(self, obj, folder, print_batch):
+        self.__obj = obj
         self.__folder = folder
         self.__print_batch = print_batch
-        self.__obj = obj
+        self.__epoch = 0
 
     def on_epoch_begin(self, epoch, logs={}):
         self.__epoch = epoch
