@@ -8,8 +8,8 @@ All rights reserved.
 import os.path
 import sys
 
-from digits_analysis import analyse
-from models.ae import Autoencoder
+from digits import analysis
+from models.vae import VariationalAutoencoder
 from utils.data_utils import load_mnist
 from utils.model_utils import ModelManager
 
@@ -20,7 +20,7 @@ def run(build, data_dir='out'):
 
     (x_train, _), (x_test, y_test) = load_mnist()
 
-    obj = Autoencoder(
+    obj = VariationalAutoencoder(
         name=name,
         input_dim=(28, 28, 1),
         encoder_conv_filters=[32, 64, 64, 64],
@@ -30,7 +30,8 @@ def run(build, data_dir='out'):
         decoder_conv_t_kernel_size=[3, 3, 3, 3],
         decoder_conv_t_strides=[1, 2, 2, 1],
         z_dim=2,
-        learning_rate=0.0005
+        learning_rate=0.0005,
+        r_loss_factor=1000
     )
 
     manager = ModelManager(data_dir, name)
@@ -49,7 +50,7 @@ def run(build, data_dir='out'):
             folder=manager.get_folder()
         )
 
-    analyse(obj, x_test, y_test)
+    analysis.analyse(obj, x_test, y_test)
 
 
 def main(args):
