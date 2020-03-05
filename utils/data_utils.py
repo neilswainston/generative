@@ -18,10 +18,3 @@ def load_mnist():
     x_test = x_test.reshape(x_test.shape + (1,))
 
     return (x_train, y_train), (x_test, y_test)
-
-
-def sample(data, n):
-    '''Randomly sample.'''
-    n_to_show = 5000
-    example_idx = np.random.choice(range(len(daat)), n)
-    example_images = x_test[example_idx]
