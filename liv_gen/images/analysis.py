@@ -26,7 +26,7 @@ def analyse(obj, x_data, y_data):
     recnst = obj.decoder.predict(z_subsample)
     plot_utils.plot_orig_reconstruct(x_sample[:n], recnst, z_subsample)
 
-    # Plot continuum:
+    # Plot grid:
     z_grid = analysis_utils.get_grid(z_data, grid_size=20)
     plot_utils.plot_latent_space(z_data, z_grid, y_sample)
     plot_utils.plot_reconstruct(obj, z_grid)

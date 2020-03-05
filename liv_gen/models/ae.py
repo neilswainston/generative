@@ -5,20 +5,16 @@ All rights reserved.
 
 @author: neilswainston
 '''
+# pylint: disable=invalid-name
 # pylint: disable=no-self-use
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-instance-attributes
-# pylint: disable=invalid-name
-import os
-
+# pylint: disable=wrong-import-order
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Conv2D, Flatten, Dense, Conv2DTranspose, \
     Reshape, Activation, BatchNormalization, LeakyReLU, Dropout
 from keras.models import Model
 from keras.optimizers import Adam
-
-from liv_gen.utils.callbacks import ImageCallback, step_decay_schedule
 import numpy as np
 
 
@@ -51,6 +47,8 @@ class Autoencoder():
         self.learning_rate = learning_rate
         self.use_batch_norm = use_batch_norm
         self.use_dropout = use_dropout
+
+        self.__callbacks = []
 
         self.__build()
 
@@ -124,10 +122,13 @@ class Autoencoder():
     def compile(self):
         '''Compile.'''
         self.model.compile(optimizer=Adam(lr=self.learning_rate),
-                           loss=self.r_loss)
+                           loss=r_loss)
 
-    def train(self, x_train, batch_size, epochs, folder,
-              print_batch=100, lr_decay=1):
+    def add_callbacks(self, callbacks):
+        '''Add callbacks.'''
+        self.__callbacks.extend(callbacks)
+
+    def train(self, x_train, batch_size, epochs):
         '''Train.'''
         self.model.fit(
             x_train,
@@ -135,20 +136,17 @@ class Autoencoder():
             shuffle=True,
             batch_size=batch_size,
             epochs=epochs,
-            callbacks=self.__get_callbacks(folder, print_batch, lr_decay),
+            callbacks=self.__callbacks,
         )
 
-    def train_with_generator(self, data_flow, epochs, steps_per_epoch,
-                             folder,
-                             print_batch=100,
-                             lr_decay=1):
+    def train_with_generator(self, data_flow, epochs, steps_per_epoch):
         '''Train with generator.'''
         self.model.fit_generator(
             data_flow,
             shuffle=True,
             epochs=epochs,
             steps_per_epoch=steps_per_epoch,
-            callbacks=self.__get_callbacks(folder, print_batch, lr_decay),
+            callbacks=self.__callbacks,
         )
 
     def get_arguments(self):
@@ -180,28 +178,11 @@ class Autoencoder():
         '''Get decoder.'''
         return self.decoder
 
-    def r_loss(self, y_true, y_pred):
-        '''Get loss.'''
-        return K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
-
     def get_enc_output(self, x):
         '''Get encoder output.'''
         return Dense(self.z_dim, name='encoder_output')(x)
 
-    def __get_callbacks(self, folder, print_batch, lr_decay):
-        '''Get callbacks.'''
-        image_callback = ImageCallback(folder, print_batch, self)
 
-        lr_sched = step_decay_schedule(
-            initial_lr=self.learning_rate, decay_factor=lr_decay, step_size=1)
-
-        checkpoint1 = ModelCheckpoint(
-            os.path.join(
-                folder, 'weights/weights-{epoch:03d}-{loss:.2f}.h5'),
-            save_weights_only=True, verbose=1)
-
-        checkpoint2 = ModelCheckpoint(
-            os.path.join(folder, 'weights/weights.h5'),
-            save_weights_only=True, verbose=1)
-
-        return [checkpoint1, checkpoint2, image_callback, lr_sched]
+def r_loss(y_true, y_pred):
+    '''Get loss.'''
+    return K.mean(K.square(y_true - y_pred), axis=[1, 2, 3])
