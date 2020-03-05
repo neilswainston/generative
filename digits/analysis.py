@@ -15,41 +15,30 @@ import numpy as np
 
 def analyse(obj, x_data, y_data):
     '''Analyse.'''
-    # Plot latent space from sample of encoded test data:
-    z_data = get_latent_space(obj, x_data, k=5000)
-    plot_latent_space(z_data)
+    x_sample, y_sample, z_data = get_latent_space(obj, x_data, y_data, k=5000)
 
-    # Plot reconstructions:
-    sample, recnst, z_points = get_reconstruct(obj, x_data, k=10)
-    plot_reconstruct_orig(sample, recnst, z_points)
+    # Plot latent space from sample of encoded test data:
+    # plot_latent_space(z_data)
+
+    # Plot original versus reconstructions:
+    n = 16
+    z_subsample = z_data[:n]
+    recnst = obj.decoder.predict(z_subsample)
+    plot_orig_reconstruct(x_sample[:n], recnst, z_subsample)
 
     # Plot continuum:
-    sample, labels, z_points = get_continuum(obj, x_data, y_data, k=5000)
-    z_grid = get_grid(z_points, grid_size=20)
-    plot_continuum(obj, z_points, z_grid, labels)
+    z_grid = get_grid(z_data, grid_size=20)
+    plot_latent_space(z_data, z_grid, y_sample)
+    plot_reconstruct(obj, z_grid)
 
 
-def get_latent_space(obj, data, k):
+def get_latent_space(obj, x_data, y_data, k):
     '''Get latent space from sample of data.'''
-    sample = data[np.random.choice(data.shape[0], k, replace=False), :]
-    return obj.encoder.predict(sample)
-
-
-def get_reconstruct(obj, data, k):
-    '''Get reconstructed from sample of data.'''
-    sample = data[np.random.choice(data.shape[0], k, replace=False), :]
-    z_points = obj.encoder.predict(sample)
-    recnst = obj.decoder.predict(z_points)
-    return sample, recnst, z_points
-
-
-def get_continuum(obj, x_data, y_data, k):
-    '''Get continuum of latent space.'''
     sample_idx = np.random.choice(range(len(x_data)), k)
-    sample = x_data[sample_idx]
-    labels = y_data[sample_idx]
-    z_points = obj.encoder.predict(sample)
-    return sample, labels, z_points
+    x_sample = x_data[sample_idx]
+    y_sample = y_data[sample_idx]
+    z_data = obj.encoder.predict(x_sample)
+    return x_sample, y_sample, z_data
 
 
 def get_grid(z_points, grid_size=20):
@@ -62,15 +51,45 @@ def get_grid(z_points, grid_size=20):
     return np.array(list(zip(xv, yv)))
 
 
-def plot_latent_space(z_points):
-    '''Plot latent space.'''
+def plot_latent_space(z_points, z_selected=None, labels=None):
+    '''Plot grid over latent space.'''
     plt.figure()
-    plt.scatter(z_points[:, 0], z_points[:, 1], c='black', alpha=0.5, s=2)
+
+    if labels is not None:
+        plt.scatter(z_points[:, 0], z_points[:, 1], cmap='rainbow', c=labels,
+                    alpha=0.5, s=2)
+        plt.colorbar()
+    else:
+        plt.scatter(z_points[:, 0], z_points[:, 1], cmap='rainbow',
+                    alpha=0.5, s=2)
+
+    if z_selected is not None:
+        plt.scatter(z_selected[:, 0], z_selected[:, 1], c='black',
+                    alpha=1, s=5)
+
     plt.show()
 
 
-def plot_reconstruct_orig(orig, recnst, z_points):
-    '''Plot reconstructed original paintings.'''
+def plot_reconstruct(obj, z_data):
+    '''Plot reconstructed images.'''
+    grid_size = int(len(z_data)**0.5)
+
+    reconst = obj.decoder.predict(z_data)
+
+    figsize = 8
+    fig = plt.figure(figsize=(figsize, figsize))
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+
+    for i in range(grid_size**2):
+        ax = fig.add_subplot(grid_size, grid_size, i + 1)
+        ax.axis('off')
+        ax.imshow(reconst[i, :, :, 0], cmap='Greys')
+
+    plt.show()
+
+
+def plot_orig_reconstruct(orig, recnst, z_points):
+    '''Plot original versus reconstructed images.'''
     size = len(orig)
 
     fig = plt.figure(figsize=(15, 3))
@@ -87,32 +106,3 @@ def plot_reconstruct_orig(orig, recnst, z_points):
         ax = fig.add_subplot(2, size, idx + size + 1)
         ax.axis('off')
         ax.imshow(rec.squeeze(), cmap='gray_r')
-
-
-def plot_continuum(obj, z_points, z_grid, sample_labels):
-    '''Plot continuum grid over latent space.'''
-    _plot_grid(z_points, z_grid, sample_labels)
-    grid_size = int(len(z_grid)**0.5)
-
-    reconst = obj.decoder.predict(z_grid)
-
-    figsize = 8
-    fig = plt.figure(figsize=(figsize, figsize))
-    fig.subplots_adjust(hspace=0.4, wspace=0.4)
-
-    for i in range(grid_size**2):
-        ax = fig.add_subplot(grid_size, grid_size, i + 1)
-        ax.axis('off')
-        ax.imshow(reconst[i, :, :, 0], cmap='Greys')
-
-    plt.show()
-
-
-def _plot_grid(z_points, z_grid, labels):
-    '''Plot grid over latent space.'''
-    plt.figure(figsize=(5, 5))
-    plt.scatter(z_points[:, 0], z_points[:, 1],
-                cmap='rainbow', c=labels, alpha=0.5, s=2)
-    plt.colorbar()
-    plt.scatter(z_grid[:, 0], z_grid[:, 1], c='black', alpha=1, s=5)
-    plt.show()
