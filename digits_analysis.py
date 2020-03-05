@@ -10,66 +10,14 @@ All rights reserved.
 # pylint: disable=too-many-statements
 # pylint: disable=wrong-import-order
 import matplotlib.pyplot as plt
-from models.ae import Autoencoder
 import numpy as np
-from utils.loaders import load_mnist, load_model
+from utils.loaders import load_mnist
 
 
-# run params
-SECTION = 'ae'
-RUN_ID = '0001'
-DATA_NAME = 'digits'
-RUN_FOLDER = 'run/{}/'.format(SECTION)
-RUN_FOLDER += '_'.join([RUN_ID, DATA_NAME])
-
-
-def _plot_reconstruct_orig(autoencoder, x_test):
-    '''Plot reconstructed original paintings.'''
-    n_to_show = 10
-    example_idx = np.random.choice(range(len(x_test)), n_to_show)
-    example_images = x_test[example_idx]
-
-    z_points = autoencoder.encoder.predict(example_images)
-
-    reconst_images = autoencoder.decoder.predict(z_points)
-
-    fig = plt.figure(figsize=(15, 3))
-    fig.subplots_adjust(hspace=0.4, wspace=0.4)
-
-    for i in range(n_to_show):
-        img = example_images[i].squeeze()
-        ax = fig.add_subplot(2, n_to_show, i + 1)
-        ax.axis('off')
-        ax.text(0.5, -0.35, str(np.round(z_points[i], 1)),
-                fontsize=10, ha='center', transform=ax.transAxes)
-        ax.imshow(img, cmap='gray_r')
-
-    for i in range(n_to_show):
-        img = reconst_images[i].squeeze()
-        ax = fig.add_subplot(2, n_to_show, i + n_to_show + 1)
-        ax.axis('off')
-        ax.imshow(img, cmap='gray_r')
-
-
-def _plot_latent_space(z_points):
-    '''Plot latent space.'''
-    figsize = 12
-
-    plt.figure(figsize=(figsize, figsize))
-    plt.scatter(z_points[:, 0], z_points[:, 1], c='black', alpha=0.5, s=2)
-    plt.show()
-
-
-def main():
-    '''main method.'''
+def analyse(model):
+    '''Analyse.'''
     # ## Load the data
     _, (x_test, y_test) = load_mnist()
-
-    # ## Load the model architecture
-    model = load_model(Autoencoder, RUN_FOLDER)
-
-    # ## reconstructing original paintings
-    _plot_reconstruct_orig(model, x_test)
 
     # ## Mr N. Coder's wall
     n_to_show = 5000
@@ -164,5 +112,38 @@ def main():
         ax.imshow(reconst[i, :, :, 0], cmap='Greys')
 
 
-if __name__ == '__main__':
-    main()
+def _plot_reconstruct_orig(autoencoder, x_test):
+    '''Plot reconstructed original paintings.'''
+    n_to_show = 10
+    example_idx = np.random.choice(range(len(x_test)), n_to_show)
+    example_images = x_test[example_idx]
+
+    z_points = autoencoder.encoder.predict(example_images)
+
+    reconst_images = autoencoder.decoder.predict(z_points)
+
+    fig = plt.figure(figsize=(15, 3))
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+
+    for i in range(n_to_show):
+        img = example_images[i].squeeze()
+        ax = fig.add_subplot(2, n_to_show, i + 1)
+        ax.axis('off')
+        ax.text(0.5, -0.35, str(np.round(z_points[i], 1)),
+                fontsize=10, ha='center', transform=ax.transAxes)
+        ax.imshow(img, cmap='gray_r')
+
+    for i in range(n_to_show):
+        img = reconst_images[i].squeeze()
+        ax = fig.add_subplot(2, n_to_show, i + n_to_show + 1)
+        ax.axis('off')
+        ax.imshow(img, cmap='gray_r')
+
+
+def _plot_latent_space(z_points):
+    '''Plot latent space.'''
+    figsize = 12
+
+    plt.figure(figsize=(figsize, figsize))
+    plt.scatter(z_points[:, 0], z_points[:, 1], c='black', alpha=0.5, s=2)
+    plt.show()
