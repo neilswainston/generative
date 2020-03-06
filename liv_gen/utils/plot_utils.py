@@ -47,7 +47,7 @@ def plot_reconstruct(obj, z_data):
     plt.show()
 
 
-def plot_orig_reconstruct(orig, recnst, z_points):
+def plot_orig_reconstruct(orig, recnst, z_data):
     '''Plot original versus reconstructed images.'''
     size = len(orig)
 
@@ -59,9 +59,12 @@ def plot_orig_reconstruct(orig, recnst, z_points):
         ax.axis('off')
         ax.imshow(org.squeeze(), cmap='gray_r')
 
-        ax.text(0.5, -0.35, str(np.round(z_points[idx], 1)),
-                fontsize=10, ha='center', transform=ax.transAxes)
+        if z_data.shape[1] < 5:
+            ax.text(0.5, -0.35, str(np.round(z_data[idx], 1)),
+                    fontsize=10, ha='center', transform=ax.transAxes)
 
         ax = fig.add_subplot(2, size, idx + size + 1)
         ax.axis('off')
         ax.imshow(rec.squeeze(), cmap='gray_r')
+
+    plt.show()

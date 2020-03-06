@@ -5,6 +5,7 @@ All rights reserved.
 
 @author: neilswainston
 '''
+# pylint: disable=invalid-name
 # pylint: disable=wrong-import-order
 from glob import glob
 import os.path
@@ -14,8 +15,10 @@ from keras.preprocessing.image import ImageDataGenerator
 
 from liv_gen.images import analysis, callbacks
 from liv_gen.models.vae import VariationalAutoencoder
+from liv_gen.utils.data_utils import ImageLabelLoader
 from liv_gen.utils.model_utils import ModelManager
 import numpy as np
+import pandas as pd
 
 
 def run(build, out_dir='out', data_dir='./data/celeb/', batch_size=32):
@@ -68,7 +71,19 @@ def run(build, out_dir='out', data_dir='./data/celeb/', batch_size=32):
             steps_per_epoch=num_images / batch_size
         )
 
-    # analysis.analyse(obj, x_test, y_test)
+    image_folder = os.path.join(data_dir, 'img_align_celeba/')
+
+    # ## data
+    input_dim = (128, 128, 3)
+    df = pd.read_csv(os.path.join(data_dir, 'list_attr_celeba.csv'))
+    image_loader = ImageLabelLoader(image_folder, input_dim[:2])
+
+    data_flow_generic = image_loader.build(
+        df, batch_size=128, columns=df.columns.tolist())
+
+    x_test = next(data_flow_generic)[0]
+
+    analysis.analyse(obj, x_test, None)
 
 
 def main(args):

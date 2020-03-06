@@ -13,7 +13,7 @@ def get_latent_space(obj, x_data, y_data, k):
     '''Get latent space from sample of data.'''
     sample_idx = np.random.choice(range(len(x_data)), k)
     x_sample = x_data[sample_idx]
-    y_sample = y_data[sample_idx]
+    y_sample = y_data[sample_idx] if y_data else None
     z_data = obj.encoder.predict(x_sample)
     return x_sample, y_sample, z_data
 

@@ -17,16 +17,14 @@ def analyse(obj, x_data, y_data):
     x_sample, y_sample, z_data = \
         analysis_utils.get_latent_space(obj, x_data, y_data, k=5000)
 
-    # Plot latent space from sample of encoded test data:
-    # plot_utils.plot_latent_space(z_data)
-
     # Plot original versus reconstructions:
-    n = 16
+    n = 8
     z_subsample = z_data[:n]
     recnst = obj.decoder.predict(z_subsample)
     plot_utils.plot_orig_reconstruct(x_sample[:n], recnst, z_subsample)
 
-    # Plot grid:
-    z_grid = analysis_utils.get_grid(z_data, grid_size=20)
-    plot_utils.plot_latent_space(z_data, z_grid, y_sample)
-    plot_utils.plot_reconstruct(obj, z_grid)
+    if z_data.shape[1] == 2:
+        # Plot grid:
+        z_grid = analysis_utils.get_grid(z_data, grid_size=20)
+        plot_utils.plot_latent_space(z_data, z_grid, y_sample)
+        plot_utils.plot_reconstruct(obj, z_grid)
